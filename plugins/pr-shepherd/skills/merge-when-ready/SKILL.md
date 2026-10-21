@@ -11,7 +11,7 @@ Arguments: `$ARGUMENTS`
 
 - First argument: PR number or URL.
 - `--checks required|all|<name,name>`: checks that must pass. Default `required`. The set always includes the PR's required checks. If the base branch has no required checks, `required` means all checks.
-- `--then-release`: after the merge, invoke the `pr-shepherd:release` skill.
+- `--then-release`: after the merge, invoke the `pr-shepherd:release` skill instead of stopping.
 - `--allow-admin-override`: allows `gh pr merge --admin` past a chronic required failure. Off by default.
 - `--dry-run`: for each decision, print the decision and the command you would run. Change nothing: no push, rerun, merge, auto-merge, or state-file write.
 
@@ -109,7 +109,7 @@ If auto-merge is allowed and not enabled, and the behind decision covers the cur
 1. Merge with the repo's default method (`mergeMethods.default`, which must be in `mergeMethods.allowed`): `gh pr merge <PR> --<squash|merge|rebase>`.
 2. Run pr_state.sh again and confirm `state == "MERGED"`.
 3. Notify the user: PR merged, merge commit, behind `reason`, and any ignored checks.
-4. Stop the loop. With `--then-release`, invoke the `pr-shepherd:release` skill.
+4. Without `--then-release`, stop the loop. With it, invoke the `pr-shepherd:release` skill, which continues the loop or stops it.
 
 If the base moved since the behind decision, decide again before you merge. If the new decision is "update" and auto-merge is enabled, disable it first.
 

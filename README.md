@@ -8,7 +8,7 @@ A Claude Code plugin marketplace with one plugin, `pr-shepherd`.
 | :- | :- |
 | `/pr-shepherd:merge-when-ready` | Runs under `/loop`. Updates the branch when needed, triages failing CI, reruns flaky jobs, and merges when the PR is ready. It notifies you only when you must decide something, and when the PR merges. |
 | `pr-shepherd:ci-triage` agent | Decides if a failing check is flaky or caused by the PR. It checks the base branch history for chronic failures and proposes a fix. It is read-only. |
-| `/pr-shepherd:release` | Bumps the version in a PR, drafts release notes, and prepares the Registrator comment or Register workflow. It asks you before it posts anything. |
+| `/pr-shepherd:release` | Runs under `/loop`. Finds the open version-bump PR, or opens one in the repo's style, shepherds it to merge, then drafts release notes and the Registrator comment or Register workflow. It asks you before it posts anything. |
 
 You need `gh` (authenticated) and bash. On Windows, use Git Bash. Optional: set `BUILDKITE_API_TOKEN` so the skill can rerun only the failed Buildkite jobs and read private Buildkite logs. Without the token, it retriggers a flaky Buildkite check by pushing an empty commit, which reruns all CI (at most 2 per PR).
 
@@ -27,13 +27,23 @@ To test a local checkout, use `claude plugin marketplace add ./claude_plugins` i
 /loop /pr-shepherd:merge-when-ready 6270
 /loop /pr-shepherd:merge-when-ready https://github.com/CliMA/Oceananigans.jl/pull/6270 --checks all --then-release
 /pr-shepherd:merge-when-ready 6270 --dry-run
-/pr-shepherd:release minor
+/loop /pr-shepherd:release
+/loop /pr-shepherd:release 0.114.1
+/pr-shepherd:release --dry-run
 ```
+
+Each run of `release` compares `Project.toml` on the default branch with the latest version in the General registry, then does the next step:
+
+1. If the bump isn't merged yet, it looks for an open PR that bumps `version` from the current one. That can be a standalone bump PR or a feature PR with a `(0.x.y)` title prefix. If it finds none, it opens one, copying the title, branch and body style of the repo's recent bump PRs. If it finds several, or a different version from the one you asked for, it asks you.
+2. It runs `merge-when-ready` on the bump PR.
+3. After the merge, it drafts release notes (`## Breaking changes` for breaking releases, in the style of earlier registrations) and the `@JuliaRegistrator register` comment. It shows you the text, stops the loop, and posts only after you say yes.
+
+It handles repos that develop on a `-DEV` version: there the bump PR drops the suffix.
 
 merge-when-ready flags:
 
 - `--checks required|all|<name,name>`: the checks that must pass. Default `required`. If the base branch has no required checks, `required` means all checks.
-- `--then-release`: runs `release` after the merge.
+- `--then-release`: runs `release` after the merge, and keeps the loop going for the bump PR.
 - `--allow-admin-override`: allows `gh pr merge --admin` past a required check that also fails chronically on the base branch.
 - `--dry-run`: prints each decision and the command it would run, and changes nothing.
 
