@@ -1,0 +1,15 @@
+{
+  "name": "xk-plugins",
+  "description": "Xin Kai Lee's Claude Code plugins",
+  "owner": {
+    "name": "Xin Kai Lee",
+    "url": "https://github.com/xkykai"
+  },
+  "plugins": [
+    {
+      "name": "pr-shepherd",
+      "source": "./plugins/pr-shepherd",
+      "description": "Shepherd a GitHub PR to merge under /loop and prepare Julia package releases."
+    }
+  ]
+}

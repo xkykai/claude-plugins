@@ -1,0 +1,12 @@
+{
+  "name": "pr-shepherd",
+  "version": "0.1.0",
+  "description": "Shepherd a GitHub PR to merge under /loop (branch updates, CI triage, flaky reruns) and prepare Julia package releases.",
+  "author": {
+    "name": "Xin Kai Lee",
+    "url": "https://github.com/xkykai"
+  },
+  "repository": "https://github.com/xkykai/claude-plugins",
+  "license": "MIT",
+  "keywords": ["github", "pull-request", "ci", "julia", "release"]
+}
