@@ -31,6 +31,7 @@ Keep one JSON file per PR at `${CLAUDE_PLUGIN_DATA}/merge-when-ready/<owner>__<r
 
 - `behind`: `{head, base, decision: "update"|"merge-as-is", reason}` for the last BEHIND decision
 - `reruns`: `{"<head-sha>": {"<check>": count}}`
+- `retriggers`: number of empty commits pushed to retrigger CI
 - `durations`: `{"<check>": typical minutes}`
 - `ignored`: `{"<check>": "failing on <base> since <date/PR>, same signature"}`
 - `lastStatus`: the last logged one-line status, so you log only changes
@@ -87,11 +88,12 @@ Spawn the `pr-shepherd:ci-triage` agent with the repo, PR, head SHA and the fail
 - **Caused by the PR**: do NOT push. Put the proposed fix on a local branch in the worktree. Notify the user with the failing check, the root cause, a summary of the proposed diff, and the options (apply and push, edit, ignore). Stop.
 - **Chronic flake** (fails on base with the same signature):
   - Not required: ignore it. Don't rerun it, and don't let it block, even under `--checks all`. Record it in `ignored`.
-  - Required: GitHub won't merge past it. Rerun it once (counts toward the limit below). If it fails again: with `--allow-admin-override`, merge with `--admin`; otherwise notify the user with the evidence and stop.
+  - Required: GitHub won't merge past it. Rerun it once, the same way as a one-off flake below (counts toward its limits). If it fails again: with `--allow-admin-override`, merge with `--admin`; otherwise notify the user with the evidence and stop.
 - **One-off flake** (not failing on base recently): rerun only the failed jobs, at most 2 times per check per head SHA.
   - Actions: `gh run rerun <run> --failed`.
-  - Buildkite: if `$BUILDKITE_API_TOKEN` is set, `PUT https://api.buildkite.com/v2/organizations/{org}/pipelines/{pipeline}/builds/{number}/jobs/{job}/retry` for each failed job. Otherwise notify the user with the link and stop.
-  - At the limit: notify the user and stop.
+  - Buildkite with `$BUILDKITE_API_TOKEN` set: `PUT https://api.buildkite.com/v2/organizations/{org}/pipelines/{pipeline}/builds/{number}/jobs/{job}/retry` for each failed job.
+  - Otherwise (Buildkite without a token, another external CI, or the rerun call fails): push an empty commit to retrigger all CI, at most 2 per PR, counted in `retriggers`. In the worktree, check out the PR branch (`gh pr checkout <PR>`), then run `git commit --allow-empty -m "Retrigger CI"` and `git push`. If you can't push to the head branch (a fork without maintainer edits), notify the user with the link and stop.
+  - At either limit: notify the user and stop.
 - If the failure's signature differs from the check's chronic pattern (a different test, a real assertion error), treat it as possibly caused by the PR.
 
 ### Checks pending

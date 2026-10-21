@@ -10,7 +10,7 @@ A Claude Code plugin marketplace with one plugin, `pr-shepherd`.
 | `pr-shepherd:ci-triage` agent | Decides if a failing check is flaky or caused by the PR. It checks the base branch history for chronic failures and proposes a fix. It is read-only. |
 | `/pr-shepherd:release` | Bumps the version in a PR, drafts release notes, and prepares the Registrator comment or Register workflow. It asks you before it posts anything. |
 
-You need `gh` (authenticated) and bash. On Windows, use Git Bash. Optional: set `BUILDKITE_API_TOKEN` for Buildkite reruns and private Buildkite logs.
+You need `gh` (authenticated) and bash. On Windows, use Git Bash. Optional: set `BUILDKITE_API_TOKEN` so the skill can rerun only the failed Buildkite jobs and read private Buildkite logs. Without the token, it retriggers a flaky Buildkite check by pushing an empty commit, which reruns all CI (at most 2 per PR).
 
 ## Install
 
@@ -66,6 +66,8 @@ Add this block to `~/.claude/settings.json`. It lets the loop run without prompt
       "Bash(gh api repos/*/commits*)",
       "Bash(git fetch *)",
       "Bash(git merge *)",
+      "Bash(gh pr checkout *)",
+      "Bash(git commit --allow-empty *)",
       "Bash(git push *)",
       "Bash(git worktree *)"
     ],
