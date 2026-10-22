@@ -34,7 +34,7 @@ To test a local checkout, use `claude plugin marketplace add ./claude_plugins` i
 
 Each run of `release` compares `Project.toml` on the default branch with the latest version in the General registry, then does the next step:
 
-1. If the bump isn't merged yet, it looks for an open PR that bumps `version` from the current one. That can be a standalone bump PR or a feature PR with a `(0.x.y)` title prefix. If it finds none, it opens one, copying the title, branch and body style of the repo's recent bump PRs. If it finds several, or a different version from the one you asked for, it asks you.
+1. If the bump isn't merged yet, it picks the version from what is on the default branch: patch unless a PR merged since the last release is breaking. Open feature PRs are ignored, even ones that carry a bump. It reuses an open standalone bump PR to that version, or opens one, copying the title, branch and body style of the repo's recent bump PRs.
 2. It runs `merge-when-ready` on the bump PR.
 3. After the merge, it drafts release notes (`## Breaking changes` for breaking releases, in the style of earlier registrations) and the `@JuliaRegistrator register` comment. It shows you the text, stops the loop, and posts only after you say yes.
 
